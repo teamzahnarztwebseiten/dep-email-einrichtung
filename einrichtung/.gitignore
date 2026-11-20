@@ -1,0 +1,5 @@
+# Enthält die Passwort-Regeln, gehört nicht ins Repository
+mail-einstellungen.json
+platform-tools/
+apk/*.apk
+mail-protokoll.csv

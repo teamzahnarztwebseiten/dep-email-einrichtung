@@ -13,13 +13,13 @@ android {
     namespace = "net.thunderbird.android"
 
     defaultConfig {
-        applicationId = "net.thunderbird.android"
-        testApplicationId = "net.thunderbird.android.tests"
+        applicationId = "de.dentaleyepad.mail"
+        testApplicationId = "de.dentaleyepad.mail.tests"
 
         versionCode = 34
         versionName = "25.0"
 
-        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Thunderbird for Android\"")
+        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"DEP Mail\"")
     }
 
     androidResources {
@@ -156,7 +156,8 @@ android {
         }
 
         debug {
-            applicationIdSuffix = ".debug"
+            // dentaleyepad: kein Suffix, damit das Einrichtungsprogramm immer
+            // denselben Paketnamen "de.dentaleyepad.mail" ansprechen kann.
             versionNameSuffix = "-SNAPSHOT"
 
             enableUnitTestCoverage = testCoverageEnabled

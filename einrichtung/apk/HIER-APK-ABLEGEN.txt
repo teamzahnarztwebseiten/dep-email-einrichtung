@@ -1,0 +1,1 @@
+Hier die Datei dep-mail.apk ablegen (aus GitHub Actions, Artefakt dep-mail-apk).

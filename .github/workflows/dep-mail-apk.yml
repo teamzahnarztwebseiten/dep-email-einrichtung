@@ -1,0 +1,60 @@
+# Schlanker Android-Build für die dentaleyepad-Mail-App „DEP Mail“.
+# Abgeleitet aus dem Upstream-Workflow build-android.yml von Thunderbird für Android 25.0.
+# Ergebnis: eine mit dem Debug-Schlüssel signierte APK (Paket de.dentaleyepad.mail) als Actions-Artefakt.
+name: DEP Mail APK bauen
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "claude/**"
+    paths-ignore:
+      - "docs/**"
+      - "einrichtung/**"
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "einrichtung/**"
+      - "**.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dep-mail-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: APK bauen (fossDebug)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Speicherplatz freiräumen
+        uses: ./.github/actions/disk-cleanup
+
+      - name: Gradle einrichten
+        uses: ./.github/actions/setup-gradle
+
+      - name: APK bauen
+        run: ./gradlew --no-daemon :app-thunderbird:assembleFossDebug -Pci=true
+
+      - name: APK umbenennen
+        run: |
+          mkdir -p out
+          cp app-thunderbird/build/outputs/apk/foss/debug/*.apk out/dep-mail.apk
+          ls -la out
+
+      - name: APK hochladen
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dep-mail-apk
+          path: out/dep-mail.apk
+          if-no-files-found: error

@@ -37,6 +37,23 @@
 
         </activity>
 
+        <!--
+            dentaleyepad: Automatische Konto-Einrichtung durch das Einrichtungsprogramm per ADB.
+            Nur Aufrufer mit android.permission.DUMP (die ADB-Shell) dürfen sie starten.
+        -->
+        <activity
+            android:name=".provisioning.DepProvisioningActivity"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            >
+            <intent-filter>
+                <action android:name="de.dentaleyepad.mail.EINRICHTEN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
     </application>
 
     <queries>
