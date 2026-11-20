@@ -1,0 +1,33 @@
+DEP Mail – Mail-Einrichtung (Probelauf)
+=======================================
+
+Wozu?
+  Das Programm spielt die Mail-App "DEP Mail" per USB-Kabel auf ein dentaleyepad und
+  richtet das Postfach dentaleyepad-<Seriennummer>@dentaleyepad.net automatisch ein.
+  Am Gerät muss nichts eingetippt werden.
+
+Was ist im Ordner?
+  DEP-Mail-Einrichtung.cmd        -> Doppelklick startet das Programm
+  DEP-Mail-Einrichtung.ps1        -> das eigentliche Programm (nicht direkt öffnen)
+  platform-tools\                 -> Android Platform-Tools von Google (adb.exe)
+  apk\                            -> die App-Datei (dep-mail.apk)
+  mail-einstellungen.json         -> FEHLT IM PAKET, selbst dazulegen (siehe unten)
+  mail-protokoll.csv              -> entsteht nach dem ersten Gerät (ohne Passwörter)
+
+
+EINMALIG AM PC
+--------------
+1. Rechtsklick auf die ZIP > Eigenschaften > unten Haken bei "Zulassen" setzen > OK.
+2. Rechtsklick auf die ZIP > "Alle extrahieren..." > z. B. nach C:\DEP-Mail-Einrichtung.
+3. Die Datei mail-einstellungen.json (mit den Passwort-Regeln) in diesen Ordner legen,
+   direkt neben DEP-Mail-Einrichtung.cmd. Sie ist aus Sicherheitsgründen nicht im Paket.
+
+
+PRO GERÄT
+---------
+1. Gerät mit dem WLAN verbinden (die App prüft die Anmeldung am Mailserver).
+2. USB-Debugging am Gerät ist an (wie bei der Fernwartung), Gerät per USB anschließen,
+   Abfrage "USB-Debugging zulassen?" am Gerät bestätigen.
+3. Doppelklick auf DEP-Mail-Einrichtung.cmd, fünfstellige Seriennummer eingeben, Enter.
+4. Grün = fertig. Gelb = fertig, aber das Postfach hat noch das alte Passwort.
+   Rot = Fehler, der Grund steht dabei.

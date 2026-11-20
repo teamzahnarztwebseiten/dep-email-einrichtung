@@ -1,6 +1,7 @@
 # Schlanker Android-Build für die dentaleyepad-Mail-App „DEP Mail“.
 # Abgeleitet aus dem Upstream-Workflow build-android.yml von Thunderbird für Android 25.0.
-# Ergebnis: eine mit dem Debug-Schlüssel signierte APK (Paket de.dentaleyepad.mail) als Actions-Artefakt.
+# Ergebnis: eine mit dem Debug-Schlüssel signierte APK (Paket de.dentaleyepad.mail) als Actions-Artefakt
+# und das fertige Windows-Paket "DEP-Mail-Einrichtung-Windows" (Programm + App + adb).
 name: DEP Mail APK bauen
 
 on:
@@ -11,12 +12,10 @@ on:
       - "claude/**"
     paths-ignore:
       - "docs/**"
-      - "einrichtung/**"
       - "**.md"
   pull_request:
     paths-ignore:
       - "docs/**"
-      - "einrichtung/**"
       - "**.md"
 
 permissions:
@@ -58,3 +57,51 @@ jobs:
           name: dep-mail-apk
           path: out/dep-mail.apk
           if-no-files-found: error
+
+  paket:
+    name: Windows-Paket zusammenstellen
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Skript prüfen (Windows PowerShell 5.1)
+        run: |
+          $f = 'einrichtung\DEP-Mail-Einrichtung.ps1'
+          $bytes = [IO.File]::ReadAllBytes($f)
+          if (-not ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)) { throw "$f muss UTF-8 mit BOM sein" }
+          $tokens = $null; $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $f), [ref]$tokens, [ref]$errors)
+          if ($errors) { $errors | ForEach-Object { Write-Host "$($_.Extent.StartLineNumber): $($_.Message)" }; throw 'Syntaxfehler' }
+          Write-Host 'Syntax OK'
+
+      - name: Platform-Tools von Google laden
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip' -OutFile pt.zip -UseBasicParsing
+          Expand-Archive pt.zip -DestinationPath einrichtung -Force
+          & einrichtung\platform-tools\adb.exe version
+
+      - name: APK aus diesem Lauf holen
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dep-mail-apk
+          path: einrichtung/apk
+
+      - name: Paket hochladen
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: DEP-Mail-Einrichtung-Windows
+          path: |
+            einrichtung/
+            !einrichtung/.gitignore
+            !einrichtung/.gitattributes
+            !einrichtung/apk/HIER-APK-ABLEGEN.txt
+          retention-days: 30
