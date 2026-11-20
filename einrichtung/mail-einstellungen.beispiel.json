@@ -4,5 +4,9 @@
   "adressMuster": "dentaleyepad-{NR}@dentaleyepad.net",
   "kontoName": "dentaleyepad {NR}",
   "passwortRegel1": "HIER-GUELTIGE-REGEL-MIT-{NR}",
-  "passwortRegel2": "HIER-ALTE-REGEL-MIT-{NR}-ODER-LEER"
+  "passwortRegel2": "HIER-ALTE-REGEL-MIT-{NR}-ODER-LEER",
+  "cpanelServer": "dentaleyepad.net",
+  "cpanelBenutzer": "HIER-CPANEL-BENUTZERNAME",
+  "cpanelToken": "HIER-API-TOKEN",
+  "postfachGroesseMB": 1024
 }

@@ -4,6 +4,8 @@
 # Start: DEP-Mail-Einrichtung.cmd (Doppelklick) oder mit Seriennummer:
 #   DEP-Mail-Einrichtung.cmd 31528
 #
+# Fehlt das Postfach, legt das Programm es vorher im cPanel an (nur mit cPanel-Token in mail-einstellungen.json).
+#
 # Benötigt: Windows 10/11 (Windows PowerShell 5.1), adb.exe im Ordner platform-tools,
 # die APK im Ordner apk und die Datei mail-einstellungen.json (Vorlage: mail-einstellungen.beispiel.json).
 #
@@ -130,6 +132,36 @@ function Invoke-MailProvisioning($Acc, [int]$TimeoutSec = 90) {
     return [pscustomobject]@{ Status = 'FEHLER'; Detail = "Kein Ergebnis nach $TimeoutSec s" }
 }
 
+# ---------------------------------------------------------------------------
+# Postfach im cPanel anlegen (UAPI Email::add_pop mit API-Token)
+# Rückgabe: ANGELEGT, VORHANDEN, UEBERSPRUNGEN (kein Token eingetragen) oder FEHLER
+# ---------------------------------------------------------------------------
+function Ensure-Mailbox($Acc, $Cfg) {
+    if (-not ($Cfg.PSObject.Properties.Name -contains 'cpanelToken') -or -not $Cfg.cpanelToken -or
+        $Cfg.cpanelToken -like 'HIER-*' -or -not $Cfg.cpanelBenutzer) {
+        return [pscustomobject]@{ Status = 'UEBERSPRUNGEN'; Detail = 'Kein cPanel-Token in mail-einstellungen.json' }
+    }
+    $cpHost = $(if ($Cfg.PSObject.Properties.Name -contains 'cpanelServer' -and $Cfg.cpanelServer) { $Cfg.cpanelServer } else { 'dentaleyepad.net' })
+    $quota  = $(if ($Cfg.PSObject.Properties.Name -contains 'postfachGroesseMB') { [int]$Cfg.postfachGroesseMB } else { 1024 })
+    $parts  = $Acc.Email.Split('@')
+    $url = 'https://{0}:2083/execute/Email/add_pop?email={1}&domain={2}&password={3}&quota={4}&send_welcome_email=0' -f `
+        $cpHost, [Uri]::EscapeDataString($parts[0]), [Uri]::EscapeDataString($parts[1]),
+        [Uri]::EscapeDataString($Acc.Passwort1), $quota
+    $headers = @{ Authorization = ('cpanel {0}:{1}' -f $Cfg.cpanelBenutzer, $Cfg.cpanelToken) }
+
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    try {
+        $r = Invoke-RestMethod -Uri $url -Headers $headers -Method Get -UseBasicParsing -TimeoutSec 60
+    } catch {
+        return [pscustomobject]@{ Status = 'FEHLER'; Detail = "cPanel nicht erreichbar oder Token falsch: $($_.Exception.Message)" }
+    }
+    $res = $(if ($r.PSObject.Properties.Name -contains 'result') { $r.result } else { $r })
+    if ($res.status -eq 1) { return [pscustomobject]@{ Status = 'ANGELEGT'; Detail = $Acc.Email } }
+    $err = (@($res.errors) -join ' ').Trim()
+    if ($err -match 'exist') { return [pscustomobject]@{ Status = 'VORHANDEN'; Detail = $err } }
+    return [pscustomobject]@{ Status = 'FEHLER'; Detail = "cPanel: $err" }
+}
+
 function Save-MailResult($Acc, $Res) {
     $row = [pscustomobject]@{
         Datum        = (Get-Date).ToString('yyyy-MM-dd HH:mm')
@@ -160,6 +192,14 @@ try {
     $dev = Invoke-Adb @('devices') 30
     $lines = @($dev.Out -split "`r?`n" | Where-Object { $_ -match '\tdevice$' })
     if ($lines.Count -ne 1) { throw "Es muss genau ein Gerät per USB verbunden und freigegeben sein (gefunden: $($lines.Count))." }
+
+    $mb = Ensure-Mailbox $acc $cfg
+    switch ($mb.Status) {
+        'ANGELEGT'      { Write-Ok "Postfach im cPanel neu angelegt." }
+        'VORHANDEN'     { Write-Info "Postfach gibt es schon im cPanel." }
+        'UEBERSPRUNGEN' { Write-Warn2 "Postfach wird nicht automatisch angelegt (kein cPanel-Token eingetragen)." }
+        default         { throw "Postfach konnte nicht angelegt werden. $($mb.Detail)" }
+    }
 
     Install-MailApp (Find-MailApk)
     Write-Info 'Konto wird eingerichtet, Anmeldung am Mailserver wird geprüft ...'
