@@ -1,8 +1,8 @@
 {
-  "_hinweis": "Kopie als mail-einstellungen.json neben das Programm legen und die zwei Passwort-Regeln eintragen. {NR} wird durch die fünfstellige Seriennummer ersetzt. Diese Datei NIE ins Repository hochladen.",
+  "_hinweis": "Kopie als mail-einstellungen.json neben das Programm legen. {NR} wird durch die fünfstellige Seriennummer ersetzt. passwortRegel1 = gültige Regel (gilt auch für neue Postfächer). passwortRegel2 = alte Regel, nur Ausweichversuch für ältere Postfächer, darf leer sein. Diese Datei NIE ins Repository hochladen.",
   "server": "mail.dentaleyepad.net",
   "adressMuster": "dentaleyepad-{NR}@dentaleyepad.net",
   "kontoName": "dentaleyepad {NR}",
-  "passwortRegel1": "HIER-REGEL-1-MIT-{NR}",
-  "passwortRegel2": "HIER-REGEL-2-MIT-{NR}"
+  "passwortRegel1": "HIER-GUELTIGE-REGEL-MIT-{NR}",
+  "passwortRegel2": "HIER-ALTE-REGEL-MIT-{NR}-ODER-LEER"
 }

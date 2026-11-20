@@ -37,7 +37,9 @@ adb shell am start -W -a de.dentaleyepad.mail.EINRICHTEN \
 
 1. APK aus GitHub Actions laden (Workflow „DEP Mail APK bauen“, Artefakt `dep-mail-apk`) und in `einrichtung/apk/` legen.
 2. `adb.exe` mit Zubehör nach `einrichtung/platform-tools/` kopieren.
-3. `mail-einstellungen.beispiel.json` als `mail-einstellungen.json` kopieren und die zwei Passwort-Regeln eintragen.
+3. `mail-einstellungen.beispiel.json` als `mail-einstellungen.json` kopieren und die Passwort-Regeln eintragen:
+   `passwortRegel1` ist die gültige Regel (gilt auch für alle neuen Postfächer), `passwortRegel2` die alte Regel
+   als Ausweichversuch für ältere Postfächer.
    Diese Datei gehört **nicht** ins Repository.
 4. Gerät per USB anschließen (USB-Debugging an, WLAN verbunden), `DEP-Mail-Einrichtung.cmd` doppelklicken, Seriennummer eingeben.
 5. Ergebnis steht im Fenster und in `mail-protokoll.csv` (ohne Passwörter).

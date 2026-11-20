@@ -167,8 +167,8 @@ try {
     Save-MailResult $acc $res
 
     switch ($res.Status) {
-        'OK'           { Write-Ok "Fertig. Konto $($acc.Email) ist eingerichtet (Passwort-Regel 1)." }
-        'OK_PASSWORT2' { Write-Ok "Fertig. Konto $($acc.Email) ist eingerichtet (Passwort-Regel 2)." }
+        'OK'           { Write-Ok "Fertig. Konto $($acc.Email) ist eingerichtet." }
+        'OK_PASSWORT2' { Write-Warn2 "Fertig. Konto $($acc.Email) ist eingerichtet, aber nur mit der ALTEN Passwort-Regel. Das Postfach sollte auf die gültige Regel umgestellt werden." }
         'VORHANDEN'    { Write-Ok "Konto $($acc.Email) war auf dem Gerät schon eingerichtet." }
         'FEHLER_ANMELDUNG' { Write-Err "Anmeldung abgelehnt. Gibt es das Postfach, und stimmen die Passwort-Regeln? ($($res.Detail))" }
         'FEHLER_NETZWERK'  { Write-Err "Mailserver nicht erreichbar. Hat das Gerät Internet (WLAN)? ($($res.Detail))" }
