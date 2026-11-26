@@ -126,3 +126,46 @@ jobs:
             !einrichtung/.gitattributes
             !einrichtung/apk/HIER-APK-ABLEGEN.txt
           retention-days: 30
+
+  veroeffentlichen:
+    name: Als Download veröffentlichen (Release "dep-mail-aktuell")
+    needs: [build, paket]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: APK holen
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dep-mail-apk
+          path: out
+
+      - name: Windows-Paket holen
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: DEP-Mail-Einrichtung-Windows
+          path: paket/DEP-Mail-Einrichtung
+
+      - name: ZIP packen
+        run: |
+          cd paket && zip -qr ../out/DEP-Mail-Einrichtung-Windows.zip DEP-Mail-Einrichtung
+          ls -la ../out
+
+      - name: Release aktualisieren
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          TAG=dep-mail-aktuell
+          NOTES="Neuester Stand von ${GITHUB_REF_NAME} (Commit ${SHA:0:7}), gebaut am $(date -u '+%d.%m.%Y %H:%M') UTC.
+          - dep-mail.apk: die App, z. B. zum Hochladen in MDMesh
+          - DEP-Mail-Einrichtung-Windows.zip: Einrichtungsprogramm für den PC (mail-einstellungen.json selbst dazulegen)"
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$REPO" --notes "$NOTES" --target "$SHA" --prerelease
+          else
+            gh release create "$TAG" --repo "$REPO" --title "DEP Mail – aktueller Stand" --notes "$NOTES" --target "$SHA" --prerelease
+          fi
+          gh release upload "$TAG" --repo "$REPO" --clobber out/dep-mail.apk out/DEP-Mail-Einrichtung-Windows.zip
