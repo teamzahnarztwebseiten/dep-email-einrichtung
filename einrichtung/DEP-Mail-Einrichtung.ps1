@@ -100,7 +100,8 @@ function Find-MailApk {
 # Ist die App schon auf dem Gerät (zum Beispiel über MDMesh verteilt)?
 function Test-MailAppInstalled {
     $r = Invoke-Adb @('shell', "pm list packages $PKG") 30
-    return ($r.Out -split "`r?`n" | Where-Object { $_.Trim() -eq "package:$PKG" }).Count -gt 0
+    $treffer = @($r.Out -split "`r?`n" | Where-Object { $_.Trim() -eq "package:$PKG" })
+    return $treffer.Count -gt 0
 }
 
 function Install-MailApp([string]$ApkPath) {
@@ -156,6 +157,24 @@ function Ensure-Mailbox($Acc, $Cfg) {
     $headers = @{ Authorization = ('cpanel {0}:{1}' -f $Cfg.cpanelBenutzer, $Cfg.cpanelToken) }
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    # Erst nachsehen, ob es das Postfach schon gibt (UAPI Email::list_pops mit Filter)
+    $listUrl = 'https://{0}:2083/execute/Email/list_pops?regex={1}' -f `
+        $cpHost, [Uri]::EscapeDataString('^' + [regex]::Escape($Acc.Email) + '$')
+    try {
+        $l = Invoke-RestMethod -Uri $listUrl -Headers $headers -Method Get -UseBasicParsing -TimeoutSec 60
+    } catch {
+        return [pscustomobject]@{ Status = 'FEHLER'; Detail = "cPanel nicht erreichbar oder Token falsch: $($_.Exception.Message)" }
+    }
+    $lres = $(if ($l.PSObject.Properties.Name -contains 'result') { $l.result } else { $l })
+    if ($lres.status -eq 1 -and $lres.PSObject.Properties['data']) {
+        $vorhanden = @(@($lres.data) | Where-Object {
+            $_ -and (($_.PSObject.Properties['email'] -and $_.email -eq $Acc.Email) -or
+                     ($_.PSObject.Properties['login'] -and $_.login -eq $Acc.Email))
+        })
+        if ($vorhanden.Count -gt 0) { return [pscustomobject]@{ Status = 'VORHANDEN'; Detail = $Acc.Email } }
+    }
+
     try {
         $r = Invoke-RestMethod -Uri $url -Headers $headers -Method Get -UseBasicParsing -TimeoutSec 60
     } catch {
