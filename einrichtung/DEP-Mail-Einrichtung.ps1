@@ -93,8 +93,14 @@ function Get-MailAccount([string]$Nr, $Cfg) {
 function Find-MailApk {
     $apk = Get-ChildItem -Path $ApkDir -Filter '*.apk' -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if (-not $apk) { throw "Keine APK im Ordner $ApkDir gefunden." }
+    if (-not $apk) { throw "Die App ist nicht auf dem Gerät und im Ordner $ApkDir liegt keine APK. Bitte zuerst über MDMesh verteilen oder die APK in den Ordner legen." }
     return $apk.FullName
+}
+
+# Ist die App schon auf dem Gerät (zum Beispiel über MDMesh verteilt)?
+function Test-MailAppInstalled {
+    $r = Invoke-Adb @('shell', "pm list packages $PKG") 30
+    return ($r.Out -split "`r?`n" | Where-Object { $_.Trim() -eq "package:$PKG" }).Count -gt 0
 }
 
 function Install-MailApp([string]$ApkPath) {
@@ -201,7 +207,11 @@ try {
         default         { throw "Postfach konnte nicht angelegt werden. $($mb.Detail)" }
     }
 
-    Install-MailApp (Find-MailApk)
+    if (Test-MailAppInstalled) {
+        Write-Info 'App ist schon auf dem Gerät (z. B. über MDMesh), Installation wird übersprungen.'
+    } else {
+        Install-MailApp (Find-MailApk)
+    }
     Write-Info 'Konto wird eingerichtet, Anmeldung am Mailserver wird geprüft ...'
     $res = Invoke-MailProvisioning $acc
     Save-MailResult $acc $res

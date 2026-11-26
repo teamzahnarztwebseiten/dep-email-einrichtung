@@ -31,3 +31,10 @@ PRO GERÄT
 3. Doppelklick auf DEP-Mail-Einrichtung.cmd, fünfstellige Seriennummer eingeben, Enter.
 4. Grün = fertig. Gelb = fertig, aber das Postfach hat noch das alte Passwort.
    Rot = Fehler, der Grund steht dabei.
+
+
+MIT MDMESH
+----------
+Ist die App "DEP Mail" schon auf dem Gerät (über MDMesh verteilt), überspringt das
+Programm die Installation und richtet nur Postfach und Konto ein. Die APK dafür in
+MDMesh hochladen: apk\dep-mail.apk aus diesem Paket.
