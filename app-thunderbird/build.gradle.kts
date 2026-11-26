@@ -82,6 +82,19 @@ android {
     }
 
     signingConfigs {
+        // dentaleyepad: fester Signierschlüssel, damit Updates (z. B. über MDMesh) auf den
+        // Geräten installiert werden können. Werte kommen in GitHub Actions aus den Secrets
+        // ANDROID_KEYSTORE_* (siehe .github/workflows/dep-mail-apk.yml). Ohne sie: Debug-Schlüssel.
+        val depKeystore = providers.gradleProperty("dep.keystore").orNull
+        if (depKeystore != null) {
+            create("dep") {
+                storeFile = file(depKeystore)
+                storePassword = providers.gradleProperty("dep.keystorePassword").get()
+                keyAlias = providers.gradleProperty("dep.keyAlias").get()
+                keyPassword = providers.gradleProperty("dep.keystorePassword").get()
+            }
+        }
+
         val useUploadKey = providers.gradleProperty("tb.useUploadKey")
             .map(String::toBoolean)
             .orElse(true)
@@ -159,6 +172,7 @@ android {
             // dentaleyepad: kein Suffix, damit das Einrichtungsprogramm immer
             // denselben Paketnamen "de.dentaleyepad.mail" ansprechen kann.
             versionNameSuffix = "-SNAPSHOT"
+            signingConfigs.findByName("dep")?.let { signingConfig = it }
 
             enableUnitTestCoverage = testCoverageEnabled
             enableAndroidTestCoverage = testCoverageEnabled

@@ -43,7 +43,28 @@ jobs:
         uses: ./.github/actions/setup-gradle
 
       - name: APK bauen
-        run: ./gradlew --no-daemon :app-thunderbird:assembleFossDebug -Pci=true
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          # Fester Signierschlüssel aus den Repository-Secrets (gleicher Schlüssel wie die
+          # Fernwartungs-App), damit Updates auf den Geräten möglich sind.
+          # Ohne Secrets Rückfall auf den Debug-Schlüssel (dann keine Updates möglich).
+          EXTRA=""
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/dep.jks"
+            EXTRA="-Pdep.keystore=$RUNNER_TEMP/dep.jks -Pdep.keystorePassword=$KEYSTORE_PASSWORD -Pdep.keyAlias=$KEY_ALIAS"
+            echo "Signiere mit festem Schlüssel."
+          else
+            echo "::warning::Keine Signier-Secrets gesetzt, signiere mit Debug-Schlüssel."
+          fi
+          ./gradlew --no-daemon :app-thunderbird:assembleFossDebug -Pci=true $EXTRA
+
+      - name: Signatur prüfen
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs app-thunderbird/build/outputs/apk/foss/debug/*.apk | grep -i "SHA-256" || true
 
       - name: APK umbenennen
         run: |
