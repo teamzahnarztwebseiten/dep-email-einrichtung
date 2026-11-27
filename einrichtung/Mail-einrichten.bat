@@ -202,8 +202,10 @@ rem ---------------------------------------------------------------------------
 rem 4. App installieren, falls sie noch nicht auf dem Gerät ist (z. B. über MDMesh)
 rem ---------------------------------------------------------------------------
 "!DEP_ADB!" shell "pm list packages !PKG!" > "!TMPF!" 2>&1
-findstr /x /l /c:"package:!PKG!" "!TMPF!" >nul
-if not errorlevel 1 (
+rem Zeile für Zeile vergleichen: adb liefert Unix-Zeilenenden, damit kommt findstr /x nicht zurecht.
+set "APP_DA="
+for /f "usebackq delims=" %%l in ("!TMPF!") do if "%%l"=="package:!PKG!" set "APP_DA=1"
+if defined APP_DA (
     echo App ist schon auf dem Gerät ^(z. B. über MDMesh^), Installation wird übersprungen.
     goto :app_da
 )
