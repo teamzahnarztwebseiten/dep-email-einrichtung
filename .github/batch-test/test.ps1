@@ -180,3 +180,4 @@ Check 'Rückgabewert 1, Meldung' ($r.Code -eq 1 -and $r.Text.Contains('App konnt
 Write-Host ''
 if ($script:Fehler -gt 0) { throw "$($script:Fehler) Prüfung(en) fehlgeschlagen" }
 Write-Host 'Alle Prüfungen bestanden.'
+exit 0
