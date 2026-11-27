@@ -1,0 +1,50 @@
+# Prüft die Batch-Datei einrichtung/Mail-einrichten.bat unter echtem Windows.
+# adb und curl sind dabei nachgestellt (.github/batch-test), es wird kein Gerät
+# und kein cPanel gebraucht. Läuft in wenigen Minuten, unabhängig vom APK-Build.
+name: Mail-Einrichtung (Batch) prüfen
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "einrichtung/**"
+      - ".github/batch-test/**"
+      - ".github/workflows/einrichtung-batch-test.yml"
+  pull_request:
+    paths:
+      - "einrichtung/**"
+      - ".github/batch-test/**"
+      - ".github/workflows/einrichtung-batch-test.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: einrichtung-batch-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Batch-Datei prüfen (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Dateiformat prüfen (UTF-8 ohne BOM, CRLF)
+        run: |
+          $f = 'einrichtung\Mail-einrichten.bat'
+          $bytes = [IO.File]::ReadAllBytes($f)
+          if ($bytes[0] -eq 0xEF) { throw "$f darf kein BOM haben" }
+          $text = [Text.Encoding]::UTF8.GetString($bytes)
+          if ($text -match "(?<!`r)`n") { throw "$f muss Windows-Zeilenenden (CRLF) haben" }
+          Write-Host 'Format OK'
+
+      - name: Abläufe mit nachgestelltem adb und curl prüfen
+        run: .\.github\batch-test\test.ps1

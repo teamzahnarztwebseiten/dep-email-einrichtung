@@ -9,6 +9,7 @@ Wozu?
 Was ist im Ordner?
   DEP-Mail-Einrichtung.cmd        -> Doppelklick startet das Programm
   DEP-Mail-Einrichtung.ps1        -> das eigentliche Programm (nicht direkt öffnen)
+  Mail-einrichten.bat             -> dasselbe als reine Batch-Datei (siehe unten)
   platform-tools\                 -> Android Platform-Tools von Google (adb.exe)
   apk\                            -> die App-Datei (dep-mail.apk)
   mail-einstellungen.json         -> FEHLT IM PAKET, selbst dazulegen (siehe unten)
@@ -38,3 +39,25 @@ MIT MDMESH
 Ist die App "DEP Mail" schon auf dem Gerät (über MDMesh verteilt), überspringt das
 Programm die Installation und richtet nur Postfach und Konto ein. Die APK dafür in
 MDMesh hochladen: apk\dep-mail.apk aus diesem Paket.
+
+
+ALS BATCH-DATEI (Mail-einrichten.bat)
+-------------------------------------
+Mail-einrichten.bat macht genau dasselbe wie DEP-Mail-Einrichtung.cmd, ist aber eine
+reine Batch-Datei. Man kann sie in eigene Abläufe einbauen:
+
+  Mail-einrichten.bat 31528        richtet das Gerät mit der Seriennummer 31528 ein
+  Mail-einrichten.bat              (oder Doppelklick) fragt nach der Seriennummer
+
+Danach steht in %errorlevel% das Ergebnis: 0 = eingerichtet, 1 = Fehler.
+Mit Seriennummer aufgerufen wartet die Datei am Ende nicht auf einen Tastendruck.
+Sie benutzt dieselbe mail-einstellungen.json und schreibt in dieselbe mail-protokoll.csv.
+
+Beispiel für eine eigene Batch-Datei:
+  call Mail-einrichten.bat 31528
+  if errorlevel 1 echo Mail-Einrichtung hat nicht geklappt
+
+Einschränkungen gegenüber DEP-Mail-Einrichtung.cmd:
+  - Die Passwort-Regeln dürfen kein Anführungszeichen (") enthalten und nicht mit \ enden.
+  - Hängt adb (z. B. Kabel wackelt), wartet die Batch-Datei. Abbrechen mit Strg+C.
+  - Gebraucht wird curl.exe; das ist in Windows 10 (ab Version 1803) und Windows 11 enthalten.
