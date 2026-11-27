@@ -65,8 +65,12 @@ if "!CFG_passwortRegel1:{NR}=!"=="!CFG_passwortRegel1!" (
 )
 rem Ein Anführungszeichen oder ein \ am Ende lässt sich in Batch nicht sicher
 rem an adb und curl weitergeben. Lieber abbrechen als ein falsches Passwort setzen.
-set CFG_passwortRegel 2>nul | findstr /l /c:"\"^" >nul
-if not errorlevel 1 (
+set "MIT_ZEICHEN="
+set "OHNE=!CFG_passwortRegel1:"=!"
+if not "!OHNE!"=="!CFG_passwortRegel1!" set "MIT_ZEICHEN=1"
+if defined CFG_passwortRegel2 set "OHNE=!CFG_passwortRegel2:"=!"
+if defined CFG_passwortRegel2 if not "!OHNE!"=="!CFG_passwortRegel2!" set "MIT_ZEICHEN=1"
+if defined MIT_ZEICHEN (
     set "MSG=Die Passwort-Regeln dürfen kein Anführungszeichen enthalten. Dafür bitte DEP-Mail-Einrichtung.cmd verwenden."
     goto :fehler
 )
